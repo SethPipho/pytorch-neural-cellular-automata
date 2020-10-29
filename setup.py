@@ -11,7 +11,8 @@ setup(name='pytorch-neural-cellular-automata',
        install_requires=[
           'torch',
           'torchvision',
-          'pillow'
+          'pillow',
+          'click'
       ],
       entry_points = {
         'console_scripts': ['pytorch_neural_ca=pytorch_neural_ca.__main__:main'],
