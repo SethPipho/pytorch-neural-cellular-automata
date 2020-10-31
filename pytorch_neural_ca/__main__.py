@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 from pytorch_neural_ca.model import NeuralCA
-from pytorch_neural_ca.train import train_growing
+from pytorch_neural_ca.train import train_ca
 from pytorch_neural_ca.util import generate_initial_state, state_to_image
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -43,7 +43,7 @@ def train(target:str, output:str, size:int, epochs:int, step_range):
     target = target.to(device)
 
     model = NeuralCA(channels=channels, device=device)
-    train_growing(model, target, width=width, height=height, epochs=epochs, step_range=step_range)
+    train_ca(model, target, width=width, height=height, epochs=epochs, step_range=step_range)
 
     torch.save(model, Path(output, 'model.pk'))
 

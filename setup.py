@@ -14,6 +14,7 @@ setup(name='pytorch-neural-cellular-automata',
           'pillow',
           'click',
           'imageio',
+          'imageio-ffmpeg',
           'tqdm'
       ],
       entry_points = {

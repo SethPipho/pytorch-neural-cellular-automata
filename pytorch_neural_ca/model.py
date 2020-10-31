@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from PIL import Image
-import matplotlib.pyplot as plt
 
 import numpy as np
 import imageio
@@ -43,8 +42,9 @@ class NeuralCA(nn.Module):
         perception = self.perception(state)
         ds = F.relu(self.conv1(perception))
         ds = self.conv2(ds)
-        ds = ds * (torch.rand((state.shape[2], state.shape[3]), device=self.device) < .5) #simulate async update
+        ds = ds * (torch.rand((state.shape[0], 1, state.shape[2], state.shape[3]), device=self.device) < .5) #simulate async update
         alive = nn.functional.max_pool2d(state[:,3,:,:], 3, stride=1, padding=1) > .1 #alive masking
+        alive = torch.unsqueeze(alive, 1)
         next_state = state + ds
         next_state = next_state * alive
         return next_state
