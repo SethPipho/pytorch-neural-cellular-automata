@@ -37,7 +37,7 @@ def train(target:str, output:str):
     target = target.resize((width, height))
     target = transforms.ToTensor()(target)
     target = torch.unsqueeze(target, 0)
-    target.to(device)
+    target = target.to(device)
 
     model = NeuralCA(channels=channels, device=device)
     train_growing(model, target, width=width, height=height, epochs=5000)
