@@ -20,7 +20,7 @@ def train_ca(model, target, width=32, height=32, pool_size=1024, batch_size=8, e
             
             #sample pool
             with torch.no_grad():
-                idx = (torch.rand(batch_size, device=device) * pool_size).long()
+                idx = (torch.rand(batch_size, device=model.device) * pool_size).long()
                 state = pool[idx]
 
            
