@@ -5,7 +5,7 @@ import sys
 
 from pytorch_neural_ca.util import generate_initial_state
 
-def train_growing(model, target, epochs=1000, step_range=[64,96]):
+def train_growing(model, target, width=32, height=32,epochs=1000, step_range=[64,96]):
     ''' Train NeuralCA model to grow into target image'''
     optimizer = torch.optim.Adam(model.parameters(), lr = 1e-4)
     loss_fn = torch.nn.MSELoss()
@@ -13,7 +13,7 @@ def train_growing(model, target, epochs=1000, step_range=[64,96]):
     with tqdm(total=epochs, file=sys.stdout) as pbar:
         for epoch in range(epochs):
             optimizer.zero_grad()
-            state = generate_initial_state(model.dims[1], model.dims[0], model.channels)
+            state = generate_initial_state(width, height, model.channels)
             
             n_steps = random.randint(step_range[0], step_range[1])
             for step in range(n_steps):

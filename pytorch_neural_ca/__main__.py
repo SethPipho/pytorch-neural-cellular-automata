@@ -16,6 +16,8 @@ from pytorch_neural_ca.model import NeuralCA
 from pytorch_neural_ca.train import train_growing
 from pytorch_neural_ca.util import generate_initial_state, state_to_image
 
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
 @click.group()
 def cli():
     pass
@@ -36,8 +38,8 @@ def train(target:str, output:str):
     target = transforms.ToTensor()(target)
     target = torch.unsqueeze(target, 0)
 
-    model = NeuralCA(dims=(height, width) ,channels=channels)
-    train_growing(model, target, epochs=5000)
+    model = NeuralCA(channels=channels, device=device)
+    train_growing(model, target, width=width, height=height, epochs=5000)
 
     torch.save(model, Path(output, 'model.pk'))
 
