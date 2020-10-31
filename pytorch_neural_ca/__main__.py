@@ -25,12 +25,15 @@ def cli():
 @cli.command()
 @click.option("--target", help="path to target image")
 @click.option("--output", help="directory to output model and training stats")
-def train(target:str, output:str):
+@click.option("--size", help="size of grid", default=32)
+@click.option("--epochs", help="number of training iterations", default=30000)
+@click.option("--step-range", help="min and max steps to grow ca", nargs=2, default=[64, 96], type=int)
+def train(target:str, output:str, size:int, epochs:int, step_range):
 
     Path(output).mkdir(parents=True, exist_ok=True)
     
-    width = 32
-    height = 32
+    width = size
+    height = size
     channels = 16
 
     target = Image.open(target)
@@ -40,7 +43,7 @@ def train(target:str, output:str):
     target = target.to(device)
 
     model = NeuralCA(channels=channels, device=device)
-    train_growing(model, target, width=width, height=height, epochs=5000)
+    train_growing(model, target, width=width, height=height, epochs=epochs, step_range=step_range)
 
     torch.save(model, Path(output, 'model.pk'))
 
@@ -48,12 +51,13 @@ def train(target:str, output:str):
 @cli.command()
 @click.option("--model", help="path to model")
 @click.option("--output", help="path to output video", default="demo.mp4")
-def render_video(model:str, output:str):
+@click.option("--size", help="size of grid", default=32)
+@click.option("--steps", help="number of steps to run ca", default=200)
+def render_video(model:str, output:str, size:int, steps:int):
 
-    width = 64
-    height = 64
-    steps = 200
-
+    width = size
+    height = size
+ 
     model = torch.load(model)
     model.device = device
     model.to(device)

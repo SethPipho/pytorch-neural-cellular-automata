@@ -17,6 +17,6 @@ setup(name='pytorch-neural-cellular-automata',
           'tqdm'
       ],
       entry_points = {
-        'console_scripts': ['pytorch_neural_ca=pytorch_neural_ca.__main__:cli'],
+        'console_scripts': ['pytorch-neural-ca=pytorch_neural_ca.__main__:cli'],
       },
       zip_safe=True)
