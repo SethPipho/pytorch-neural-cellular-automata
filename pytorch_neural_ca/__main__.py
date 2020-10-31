@@ -37,6 +37,7 @@ def train(target:str, output:str):
     target = target.resize((width, height))
     target = transforms.ToTensor()(target)
     target = torch.unsqueeze(target, 0)
+    target.to(device)
 
     model = NeuralCA(channels=channels, device=device)
     train_growing(model, target, width=width, height=height, epochs=5000)
@@ -54,8 +55,11 @@ def render_video(model:str, output:str):
     steps = 200
 
     model = torch.load(model)
-    state = generate_initial_state(width, height, model.channels)
-
+    model.device = device
+    model.to(device)
+    
+    state = generate_initial_state(width, height, model.channels, device=device)
+  
     writer = imageio.get_writer(output, fps=24)
     
     with tqdm(total=steps, file=sys.stdout) as pbar:
