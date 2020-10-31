@@ -12,9 +12,11 @@ setup(name='pytorch-neural-cellular-automata',
           'torch',
           'torchvision',
           'pillow',
-          'click'
+          'click',
+          'imageio',
+          'tqdm'
       ],
       entry_points = {
-        'console_scripts': ['pytorch_neural_ca=pytorch_neural_ca.__main__:main'],
+        'console_scripts': ['pytorch_neural_ca=pytorch_neural_ca.__main__:cli'],
       },
       zip_safe=True)
