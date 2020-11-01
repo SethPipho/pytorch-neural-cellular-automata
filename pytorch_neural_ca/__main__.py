@@ -66,7 +66,7 @@ def render_video(model:str, output:str, size:int, steps:int):
   
     writer = imageio.get_writer(output, fps=24)
     
-    with tqdm(total=steps, file=sys.stdout) as pbar:
+    with tqdm(total=steps, file=sys.stdout) as pbar, torch.no_grad():
         for step in range(steps):
             state = model(state)
             frame = state_to_image(state)
