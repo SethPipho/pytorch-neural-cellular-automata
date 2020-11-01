@@ -42,7 +42,7 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
                 dead_idx = torch.nonzero(torch.where(dead, torch.tensor(1., device=model.device), torch.tensor(0., device=model.device)))
                 pool[idx] = state
                 worst = torch.argsort(per_sample_loss, descending=True)[0]
-                pool[worst] = generate_initial_state(width, height, model.channels, device=model.device)
+                pool[idx[worst]] = generate_initial_state(width, height, model.channels, device=model.device)
                 pool[idx[dead_idx]] = generate_initial_state(width, height, model.channels, device=model.device)
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
