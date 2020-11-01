@@ -2,10 +2,13 @@ import torch
 import random
 from tqdm import tqdm
 import sys
+import matplotlib.pyplot as plt
+from pathlib import Path
 
-from pytorch_neural_ca.util import generate_initial_state
+from pytorch_neural_ca.util import generate_initial_state, state_to_image
 
-def train_ca(model, target, width=32, height=32, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96]):
+
+def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96]):
     ''' Train NeuralCA model to grow into target image'''
     optimizer = torch.optim.Adam(model.parameters(), lr = 1e-4)
     loss_fn = torch.nn.MSELoss()
@@ -35,9 +38,12 @@ def train_ca(model, target, width=32, height=32, pool_size=1024, batch_size=8, e
 
             #return new states to pool
             with torch.no_grad():
+                dead = torch.max(torch.max(state[:,4,:,:], 2)[0], 1)[0] < .1
+                dead_idx = torch.nonzero(torch.where(dead, torch.tensor(1.), torch.tensor(0.)))
                 pool[idx] = state
                 worst = torch.argsort(per_sample_loss, descending=True)[0]
                 pool[worst] = generate_initial_state(width, height, model.channels, device=model.device)
+                pool[idx[dead_idx]] = generate_initial_state(width, height, model.channels, device=model.device)
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
@@ -45,3 +51,22 @@ def train_ca(model, target, width=32, height=32, pool_size=1024, batch_size=8, e
             pbar.update(1)
             loss_str = str(loss.detach().cpu().numpy())[:10]
             pbar.set_postfix({'loss':loss_str})
+
+            if epoch % 1000 == 0:
+                #sample pool
+                with torch.no_grad():
+                    idx = (torch.rand(16, device=model.device) * pool_size).long()
+                    state = pool[idx]                
+                    w=10
+                    h=10
+                    fig=plt.figure(figsize=(20, 20))
+                    columns = 4
+                    rows = 4
+                    for i in range(1, columns*rows +1):
+                        img = state_to_image(state[i-1:i])
+                        fig.add_subplot(rows, columns, i)
+                        plt.imshow(img)
+                    plt.savefig(Path(output_dir, 'pool.png'))
+
+                    
+

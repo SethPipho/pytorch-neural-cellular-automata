@@ -43,7 +43,7 @@ def train(target:str, output:str, size:int, epochs:int, step_range):
     target = target.to(device)
 
     model = NeuralCA(channels=channels, device=device)
-    train_ca(model, target, width=width, height=height, epochs=epochs, step_range=step_range)
+    train_ca(model, target, output, width=width, height=height, epochs=epochs, step_range=step_range)
 
     torch.save(model, Path(output, 'model.pk'))
 
