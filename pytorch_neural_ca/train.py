@@ -11,7 +11,7 @@ from pytorch_neural_ca.util import generate_initial_state, state_to_image
 def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96]):
     ''' Train NeuralCA model to grow into target image'''
     optimizer = torch.optim.Adam(model.parameters(), lr = 1e-4)
-    loss_fn = torch.nn.MSELoss()
+    schedule = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3000], gamma=0.1, verbose=True)
 
     target = target.repeat(batch_size, 1, 1, 1)
     pool = generate_initial_state(width, height, model.channels, device=model.device)
@@ -47,6 +47,7 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+            schedule.step()
 
             pbar.update(1)
             loss_str = str(loss.detach().cpu().numpy())[:10]
