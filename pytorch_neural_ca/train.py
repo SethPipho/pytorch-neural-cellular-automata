@@ -11,7 +11,7 @@ from pytorch_neural_ca.util import generate_initial_state, state_to_image
 def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96]):
     ''' Train NeuralCA model to grow into target image'''
     optimizer = torch.optim.Adam(model.parameters(), lr = 1e-4)
-    schedule = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3000], gamma=0.1, verbose=True)
+    schedule = torch.optim.lr_scheduler.MultiStepLR(optimizer, [3000], gamma=0.1)
 
     target = target.repeat(batch_size, 1, 1, 1)
     pool = generate_initial_state(width, height, model.channels, device=model.device)
@@ -25,7 +25,10 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
             with torch.no_grad():
                 idx = (torch.rand(batch_size, device=model.device) * pool_size).long()
                 state = pool[idx]
-
+                sq_error = (state[:, :4, :, :] - target) ** 2
+                per_sample_loss = torch.mean(sq_error, [1,2,3])
+                worst = torch.argsort(per_sample_loss, descending=True)[0]
+                state[worst] = generate_initial_state(width, height, model.channels, device=model.device)
            
             n_steps = random.randint(step_range[0], step_range[1])
             for step in range(n_steps):
@@ -38,11 +41,11 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
 
             #return new states to pool
             with torch.no_grad():
+                pool[idx] = state
+                
+                #remove dead states
                 dead = torch.max(torch.max(state[:,4,:,:], 2)[0], 1)[0] < .1
                 dead_idx = torch.nonzero(torch.where(dead, torch.tensor(1., device=model.device), torch.tensor(0., device=model.device)))
-                pool[idx] = state
-                worst = torch.argsort(per_sample_loss, descending=True)[0]
-                pool[idx[worst]] = generate_initial_state(width, height, model.channels, device=model.device)
                 pool[idx[dead_idx]] = generate_initial_state(width, height, model.channels, device=model.device)
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
