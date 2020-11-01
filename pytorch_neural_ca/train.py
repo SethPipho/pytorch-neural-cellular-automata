@@ -70,7 +70,7 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
                         img = state_to_image(state[i-1:i])
                         fig.add_subplot(rows, columns, i)
                         plt.imshow(img)
-                    plt.savefig(Path(output_dir, 'pool.png'))
+                    plt.savefig(Path(output_dir, 'pool-{}.png'.format(epoch)))
 
                     
 
