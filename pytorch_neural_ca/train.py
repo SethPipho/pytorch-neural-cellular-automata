@@ -3,13 +3,17 @@ import random
 from tqdm import tqdm
 import sys
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import ImageGrid
 from pathlib import Path
 
-from pytorch_neural_ca.util import generate_initial_state, state_to_image
+from pytorch_neural_ca.util import generate_initial_state, state_to_image, render_ca_video
 
 
-def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96]):
+def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96], sample_every=500, grad_clip_val=.1):
     ''' Train NeuralCA model to grow into target image'''
+
+    Path(output_dir, 'samples').mkdir(parents=True, exist_ok=True)
+
     optimizer = torch.optim.Adam(model.parameters(), lr = 1e-3)
     #schedule = torch.optim.lr_scheduler.MultiStepLR(optimizer, [5000], gamma=0.5)
 
@@ -21,8 +25,8 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
         for epoch in range(epochs):
             optimizer.zero_grad()
             
-            #sample pool
             with torch.no_grad():
+                #sample pool
                 idx = (torch.rand(batch_size, device=model.device) * pool_size).long()
                 state = pool[idx]
                 sq_error = (state[:, :4, :, :] - target) ** 2
@@ -30,7 +34,7 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
                 worst = torch.argsort(per_sample_loss, descending=True)
                 state[worst[:2]] = seed
 
-                 #remove dead states
+                #remove dead states
                 dead = torch.max(torch.max(state[:,4,:,:], 2)[0], 1)[0] < .1
                 dead_idx = torch.nonzero(torch.where(dead, torch.tensor(1., device=model.device), torch.tensor(0., device=model.device)))
                 state[dead_idx] = seed
@@ -44,7 +48,7 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
             loss = torch.mean(per_sample_loss)
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), .1)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip_val)
             optimizer.step()
             #schedule.step()
 
@@ -53,29 +57,28 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
                 pool[idx] = state
                 
                
-
-
-            
-
             pbar.update(1)
             loss_str = str(loss.detach().cpu().numpy())[:10]
             pbar.set_postfix({'loss':loss_str})
 
-            if epoch % 1000 == 0:
+            if epoch % sample_every == 0 and epoch != 0:
                 #sample pool
                 with torch.no_grad():
                     idx = (torch.rand(16, device=model.device) * pool_size).long()
-                    state = pool[idx]                
-                    w=10
-                    h=10
-                    fig=plt.figure(figsize=(20, 20))
-                    columns = 4
-                    rows = 4
-                    for i in range(1, columns*rows +1):
-                        img = state_to_image(state[i-1:i])
-                        fig.add_subplot(rows, columns, i)
-                        plt.imshow(img)
-                    plt.savefig(Path(output_dir, 'pool-{}.png'.format(epoch)))
+                    state = pool[idx]
+                    imgs = state_to_image(state)
+                
+                #https://matplotlib.org/3.1.1/gallery/axes_grid1/simple_axesgrid.html
+                fig = plt.figure(figsize=(10., 10.))
+                grid = ImageGrid(fig, 111, nrows_ncols=(4, 4),  axes_pad=0.1)
+                for ax, im in zip(grid, imgs):
+                    ax.imshow(im)
+                
+                path = Path(output_dir, 'samples', 'pool-{}.png'.format(epoch))
+                plt.savefig(path)
+
+                path = Path(output_dir, 'samples', 'video-{}.mp4'.format(epoch))
+                render_ca_video(model, path, verbose=False)
 
                     
 
