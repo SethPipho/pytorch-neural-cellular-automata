@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
 from pathlib import Path
 
-from pytorch_neural_ca.util import generate_initial_state, state_to_image, render_ca_video
+from pytorch_neural_ca.util import generate_initial_state, state_to_image, render_ca_video, value_noise
 
 
-def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96], sample_every=500, grad_clip_val=.1):
+def train_ca(model, target, output_dir, width=64, height=64, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96], sample_every=500, grad_clip_val=.1):
     ''' Train NeuralCA model to grow into target image'''
 
     Path(output_dir, 'samples').mkdir(parents=True, exist_ok=True)
@@ -29,10 +29,18 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
                 #sample pool
                 idx = (torch.rand(batch_size, device=model.device) * pool_size).long()
                 state = pool[idx]
+
+                #replace worst state with seed
                 sq_error = (state[:, :4, :, :] - target) ** 2
                 per_sample_loss = torch.mean(sq_error, [1,2,3])
-                worst = torch.argsort(per_sample_loss, descending=True)
-                state[worst[:2]] = seed
+                sorted_idx = torch.argsort(per_sample_loss)
+                state[sorted_idx[-1]] = seed
+
+                #damage
+                noise = value_noise(dims=(width,height), batch_size=2, scale=4, device=model.device)
+                mask = noise < .5
+                mask[:,:, width//2, height//2] = True #avoid killing intial seed
+                state[sorted_idx[1:3]] = state[sorted_idx[1:3]] * mask
 
                 #remove dead states
                 dead = torch.max(torch.max(state[:,4,:,:], 2)[0], 1)[0] < .1
@@ -78,7 +86,7 @@ def train_ca(model, target, output_dir, width=32, height=32, pool_size=1024, bat
                 plt.savefig(path)
 
                 path = Path(output_dir, 'samples', 'video-{}.mp4'.format(epoch))
-                render_ca_video(model, path, verbose=False)
+                render_ca_video(model, path, size=width, verbose=False)
 
                     
 
