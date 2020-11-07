@@ -24,8 +24,8 @@ def state_to_image(state, target_size=(128,128)) -> np.ndarray:
   
     frame = frame.permute(0,2,3,1)
     frame = frame[:,:,:,:4]
-    frame = torch.clamp(frame, 0.0, 1.0) * 255.0
-    frame = frame.cpu().numpy().astype(np.uint8)
+    frame = torch.clamp(frame, 0.0, 1.0) 
+    frame = frame.cpu().numpy()
     return frame
 
 
@@ -49,3 +49,13 @@ def render_ca_video(model, output, size=32, steps=1000, verbose=True):
             pbar.update(1)
     
     writer.close()
+
+def alpha_over(a, b):
+    ''' Alpha composites a over b https://en.wikipedia.org/wiki/Alpha_compositing '''
+    color_a = a[:,:,:3]
+    color_b = b[:,:,:3]
+    
+    alpha_a = a[:,:,-1:]
+    alpha_b = b[:,:,-1:]
+
+    return ((color_a * alpha_a) + (color_b * alpha_b) * (1. - alpha_a))/(alpha_a + alpha_b * (1 - alpha_a))

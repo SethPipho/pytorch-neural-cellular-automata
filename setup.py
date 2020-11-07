@@ -16,7 +16,8 @@ setup(name='pytorch-neural-cellular-automata',
           'imageio',
           'imageio-ffmpeg',
           'tqdm',
-          'matplotlib'
+          'matplotlib',
+          'opencv-python'
       ],
       entry_points = {
         'console_scripts': ['pytorch-neural-ca=pytorch_neural_ca.__main__:cli'],
