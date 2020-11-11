@@ -9,7 +9,7 @@ from pathlib import Path
 from pytorch_neural_ca.util import generate_initial_state, state_to_image, render_ca_video, value_noise
 
 
-def train_ca(model, target, output_dir, width=64, height=64, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96], sample_every=500, grad_clip_val=.1):
+def train_ca(model, target, output_dir, width=64, height=64, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96], sample_every=1000, grad_clip_val=.1):
     ''' Train NeuralCA model to grow into target image'''
 
     Path(output_dir, 'samples').mkdir(parents=True, exist_ok=True)
@@ -86,7 +86,7 @@ def train_ca(model, target, output_dir, width=64, height=64, pool_size=1024, bat
                 plt.savefig(path)
 
                 path = Path(output_dir, 'samples', 'video-{}.mp4'.format(epoch))
-                render_ca_video(model, path, size=width, verbose=False)
+                render_ca_video(model, path, width, height, verbose=False)
 
                     
 

@@ -25,23 +25,32 @@ def cli():
 
     
 @cli.command()
-@click.option("--target", help="path to target image")
+@click.option("--image", help="path to target image")
 @click.option("--output", help="directory to output model and training stats")
-@click.option("--size", help="size of grid", default=64)
+@click.option("--width", help="width of grid", default=64)
+@click.option("--padding", help="width of grid", default=12)
 @click.option("--epochs", help="number of training iterations", default=8000)
 @click.option("--step-range", help="min and max steps to grow ca", nargs=2, default=[64, 96], type=int)
 @click.option("--batch-size", help="batch size", default=8)
 @click.option("--grad-clip-val", help="max norm value for gradient clipping", default=.1)
-def train(target:str, output:str, size:int, epochs:int, step_range, batch_size:int, grad_clip_val:float):
+def train(image:str, output:str, width:int, padding:int, epochs:int, step_range, batch_size:int, grad_clip_val:float):
 
-    
-    width = size
-    height = size
+   
     channels = 16
 
-    target = Image.open(target)
-    target = target.resize((width, height))
+  
+    image = Image.open(image).convert('RGBA')
+    im_w, img_h = image.size
+    aspect = im_w / img_h
+    height = int(width / aspect)
+    image = image.resize((width - padding * 2, height - padding * 2), Image.BICUBIC)
+    target = Image.new('RGBA', (width, height))
+    target.paste(image, (padding, padding), image)
+
     target = transforms.ToTensor()(target)
+    
+   
+
     target = torch.unsqueeze(target, 0)
     target = target.to(device)
 

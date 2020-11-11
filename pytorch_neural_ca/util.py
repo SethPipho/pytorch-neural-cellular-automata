@@ -29,9 +29,9 @@ def state_to_image(state, target_size=(128,128)) -> np.ndarray:
     return frame
 
 
-def render_ca_video(model, output, size=32, steps=1000, verbose=True):
+def render_ca_video(model, output, width, height, steps=1000, verbose=True):
     
-    state = generate_initial_state(size, size, model.channels, device=model.device)
+    state = generate_initial_state(width, height, model.channels, device=model.device)
     writer = imageio.get_writer(output, fps=24)
     
     with tqdm(total=steps, disable=not verbose) as pbar, torch.no_grad():
@@ -39,16 +39,18 @@ def render_ca_video(model, output, size=32, steps=1000, verbose=True):
 
             if step % 200 == 0 and step != 0:
                 #damage
-                noise = value_noise(dims=(size, size), batch_size=1, scale=4, device=model.device)
+                noise = value_noise(dims=(width, height), batch_size=1, scale=4, device=model.device)
                 mask = noise < .25
                 state = state * mask
 
             state = model(state)
             frame = state_to_image(state)[0]
+            frame = np.uint8(frame * 255.0)
             writer.append_data(frame)
             pbar.update(1)
     
     writer.close()
+
 
 def alpha_over(a, b):
     ''' Alpha composites a over b https://en.wikipedia.org/wiki/Alpha_compositing '''
