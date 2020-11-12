@@ -29,16 +29,27 @@ def cli():
 @click.option("--output", help="directory to output model and training stats")
 @click.option("--width", help="width of grid", default=64)
 @click.option("--padding", help="width of grid", default=12)
-@click.option("--epochs", help="number of training iterations", default=8000)
-@click.option("--step-range", help="min and max steps to grow ca", nargs=2, default=[64, 96], type=int)
 @click.option("--batch-size", help="batch size", default=8)
+@click.option("--epochs", help="number of training iterations", default=8000)
+@click.option("--lr", help="learning rate", default=1e-3, type=float)
+@click.option("--step-range", help="min and max steps to grow ca", nargs=2, default=[64, 96], type=int)
 @click.option("--grad-clip-val", help="max norm value for gradient clipping", default=.1)
-def train(image:str, output:str, width:int, padding:int, epochs:int, step_range, batch_size:int, grad_clip_val:float):
+@click.option("--sample-every", help="Sample pool every n steps", default=1000)
+@click.option("--channels", help="Number of hidden channels", default=12)
+def train(image:str, 
+          output:str, 
+          width:int, 
+          padding:int, 
+          epochs:int,  
+          batch_size:int, 
+          step_range, 
+          grad_clip_val:float, 
+          lr:float, 
+          sample_every:int,
+          channels:int):
 
+    #RGBA + hidden
    
-    channels = 16
-
-  
     image = Image.open(image).convert('RGBA')
     im_w, img_h = image.size
     aspect = im_w / img_h
@@ -53,9 +64,19 @@ def train(image:str, output:str, width:int, padding:int, epochs:int, step_range,
 
     target = torch.unsqueeze(target, 0)
     target = target.to(device)
-
-    model = NeuralCA(channels=channels, device=device)
-    train_ca(model, target, output, width=width, height=height, epochs=epochs, step_range=step_range, batch_size=batch_size, grad_clip_val=grad_clip_val)
+    model = NeuralCA(channels=channels + 4, device=device)
+    train_ca(model, 
+             target, 
+             output, 
+             width=width, 
+             height=height, 
+             epochs=epochs, 
+             lr=lr,
+             step_range=step_range, 
+             batch_size=batch_size, 
+             grad_clip_val=grad_clip_val,
+             sample_every=sample_every
+             )
 
     torch.save(model, Path(output, 'model.pk'))
 

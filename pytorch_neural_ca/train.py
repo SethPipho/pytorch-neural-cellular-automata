@@ -9,18 +9,31 @@ from pathlib import Path
 from pytorch_neural_ca.util import generate_initial_state, state_to_image, render_ca_video, value_noise
 
 
-def train_ca(model, target, output_dir, width=64, height=64, pool_size=1024, batch_size=8, epochs=1000, step_range=[64,96], sample_every=1000, grad_clip_val=.1):
-    ''' Train NeuralCA model to grow into target image'''
+def train_ca(model, 
+             target, 
+             output_dir, 
+             width=64, 
+             height=64, 
+             batch_size=8, 
+             epochs=1000,
+             lr=1e-3,
+             step_range=[64,96],
+             pool_size=1024,
+             grad_clip_val=.1 ,
+             sample_every=1000):
+    ''' Train regenerating NeuralCA model'''
 
     Path(output_dir, 'samples').mkdir(parents=True, exist_ok=True)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr = 1e-3)
-    #schedule = torch.optim.lr_scheduler.MultiStepLR(optimizer, [5000], gamma=0.5)
-
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    
     target = target.repeat(batch_size, 1, 1, 1)
     seed = generate_initial_state(width, height, model.channels, device=model.device)
     pool = seed.repeat((pool_size, 1, 1, 1))
    
+
+    
+
     with tqdm(total=epochs, file=sys.stdout) as pbar:
         for epoch in range(epochs):
             optimizer.zero_grad()
