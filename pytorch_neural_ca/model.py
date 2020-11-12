@@ -7,6 +7,16 @@ from PIL import Image
 import numpy as np
 import imageio
 import random
+import math
+
+def reset_conv2d(layer):
+    n = layer.in_channels
+    for k in layer.kernel_size:
+        n *= k
+    stdv = 1. / math.sqrt(n)
+    layer.weight.data.uniform_(-stdv, stdv)
+    if layer.bias is not None:
+        layer.bias.data.uniform_(-stdv, stdv)
 
 class NeuralCA(nn.Module):
     def __init__(self, channels=16, device=torch.device('cpu')):
@@ -17,9 +27,17 @@ class NeuralCA(nn.Module):
 
         self.conv1 = nn.Conv2d(self.channels * 3, 128, 1)
         self.conv2 = nn.Conv2d(128, self.channels, 1)
-        self.conv2.weight.data.fill_(0.0)
+
+        self.reset_weights()
 
         self.to(self.device)
+
+    def reset_weights(self):
+      reset_conv2d(self.conv1)
+      reset_conv2d(self.conv2)
+
+      self.conv2.weight.data.fill_(0.0)
+
 
     def perception(self, state):
         sobol_x_kernal = torch.tensor([[1., 0, -1.],
