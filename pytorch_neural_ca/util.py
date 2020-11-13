@@ -1,10 +1,23 @@
-import torch
-import torch.nn.functional as F
+import sys
+import math
+
 import numpy as np
 import imageio
 from PIL import Image
 from tqdm import tqdm
-import sys
+
+import torch
+import torch.nn.functional as F
+
+def reset_conv2d(layer):
+    n = layer.in_channels
+    for k in layer.kernel_size:
+        n *= k
+    stdv = 1. / math.sqrt(n)
+    layer.weight.data.uniform_(-stdv, stdv)
+    if layer.bias is not None:
+        layer.bias.data.uniform_(-stdv, stdv)
+
 
 def resize_and_pad(image, width, padding):
     im_w, img_h = image.size
@@ -22,12 +35,12 @@ def generate_initial_state(width, height, channels, device=torch.device('cpu')):
 
 def value_noise(dims=(64, 64), batch_size=1, scale=1, mode='bicubic', device=torch.device('cpu')):
     x = torch.rand((batch_size, 1, dims[0]//scale, dims[1]//scale), device=device)
-    x = torch.nn.functional.interpolate(x, size=[dims[0], dims[1]], mode=mode)
+    x = F.interpolate(x, size=[dims[0], dims[1]], mode=mode, align_corners=False)
     return x
 
 def state_to_image(state, target_size=(128,128)) -> np.ndarray:
     frame = state.detach()
-    frame = F.interpolate(frame, size=target_size)
+    frame = F.interpolate(frame, size=target_size, mode='bicubic', align_corners=False)
   
     frame = frame.permute(0,2,3,1)
     frame = frame[:,:,:,:4]

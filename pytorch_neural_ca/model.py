@@ -9,14 +9,7 @@ import imageio
 import random
 import math
 
-def reset_conv2d(layer):
-    n = layer.in_channels
-    for k in layer.kernel_size:
-        n *= k
-    stdv = 1. / math.sqrt(n)
-    layer.weight.data.uniform_(-stdv, stdv)
-    if layer.bias is not None:
-        layer.bias.data.uniform_(-stdv, stdv)
+from pytorch_neural_ca.util import reset_conv2d
 
 class NeuralCA(nn.Module):
     def __init__(self, channels=16, device=torch.device('cpu')):
@@ -28,32 +21,22 @@ class NeuralCA(nn.Module):
         self.conv1 = nn.Conv2d(self.channels * 3, 128, 1)
         self.conv2 = nn.Conv2d(128, self.channels, 1)
 
-        self.reset_weights()
+        sobol_x_kernel = torch.tensor([[1., 0, -1.],[2., 0, -2.],[1., 0, -1.]], device=self.device)
+        sobol_y_kernel = torch.tensor([[1.,2., 1.],[ 0.,0.,0.], [-1.,-2.,-1.]],device=self.device)
+        self.sobol_x_kernel = sobol_x_kernel.view(1,1,3,3).repeat(self.channels, 1, 1, 1)
+        self.sobol_y_kernel = sobol_y_kernel.view(1,1,3,3).repeat(self.channels, 1, 1, 1)
 
+        self.reset_weights()
         self.to(self.device)
 
     def reset_weights(self):
       reset_conv2d(self.conv1)
       reset_conv2d(self.conv2)
-
       self.conv2.weight.data.fill_(0.0)
 
-
     def perception(self, state):
-        sobol_x_kernal = torch.tensor([[1., 0, -1.],
-                                       [2., 0, -2.],
-                                       [1., 0, -1.]], device=self.device)
-
-        sobol_y_kernel = torch.tensor([[ 1.,  2.,  1.],
-                                       [ 0.,  0.,  0.],
-                                       [-1., -2., -1.]],device=self.device)
-
-        sobol_x_kernal = sobol_x_kernal.view(1,1,3,3).repeat(self.channels, 1, 1, 1)
-        sobol_y_kernel = sobol_y_kernel.view(1,1,3,3).repeat(self.channels, 1, 1, 1)
-
-        sobol_x = F.conv2d(state, sobol_x_kernal, groups=self.channels, padding=1)
-        sobol_y = F.conv2d(state, sobol_y_kernel, groups=self.channels, padding=1)
-
+        sobol_x = F.conv2d(state, self.sobol_x_kernel, groups=self.channels, padding=1)
+        sobol_y = F.conv2d(state, self.sobol_y_kernel, groups=self.channels, padding=1)
         return torch.cat((state, sobol_x, sobol_y), 1)
 
     def forward(self, state):
