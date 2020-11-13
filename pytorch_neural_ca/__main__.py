@@ -2,7 +2,7 @@
 from pathlib import Path
 import sys
 
-import cv2
+
 import click
 import imageio
 import numpy as np
@@ -99,6 +99,8 @@ def render_video(model:str, output:str, size:int, steps:int):
 @click.option("--model", help="path to model")
 @click.option("--size", help="size of grid", default=64)
 def demo(model:str, size:int):
+
+    import cv2
 
     print('Left Mouse to erase')
     print('Right Click to place seed')

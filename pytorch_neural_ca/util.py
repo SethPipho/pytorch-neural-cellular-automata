@@ -39,7 +39,7 @@ def render_ca_video(model, output, width, height, steps=1000, verbose=True):
 
             if step % 200 == 0 and step != 0:
                 #damage
-                noise = value_noise(dims=(width, height), batch_size=1, scale=4, device=model.device)
+                noise = value_noise(dims=(height, width), batch_size=1, scale=4, device=model.device)
                 mask = noise < .25
                 state = state * mask
 

@@ -52,7 +52,7 @@ def train_ca(model,
             state[sorted_idx[-1]] = seed
 
             #damage
-            noise = value_noise(dims=(width,height), batch_size=2, scale=4, device=model.device)
+            noise = value_noise(dims=(height, width), batch_size=2, scale=4, device=model.device)
             mask = noise < .5
             mask[:,:, width//2, height//2] = True #avoid killing intial seed
             state[sorted_idx[1:3]] = state[sorted_idx[1:3]] * mask
