@@ -2,7 +2,6 @@
 from pathlib import Path
 import sys
 
-
 import click
 import imageio
 import numpy as np
@@ -15,9 +14,10 @@ import torchvision.transforms as transforms
 
 from pytorch_neural_ca.model import NeuralCA
 from pytorch_neural_ca.train import train_ca
-from pytorch_neural_ca.util import generate_initial_state, state_to_image, render_ca_video, alpha_over
+from pytorch_neural_ca.util import generate_initial_state, state_to_image, render_test_video, alpha_over, resize_and_pad
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+print("Device:", device)
 
 @click.group()
 def cli():
@@ -48,28 +48,15 @@ def train(image:str,
           sample_every:int,
           channels:int):
 
-    #RGBA + hidden
-   
     image = Image.open(image).convert('RGBA')
-    im_w, img_h = image.size
-    aspect = im_w / img_h
-    height = int(width / aspect)
-    image = image.resize((width - padding * 2, height - padding * 2), Image.BICUBIC)
-    target = Image.new('RGBA', (width, height))
-    target.paste(image, (padding, padding), image)
-
+    target = resize_and_pad(image, width, padding)
     target = transforms.ToTensor()(target)
-    
-   
-
-    target = torch.unsqueeze(target, 0)
     target = target.to(device)
+
     model = NeuralCA(channels=channels + 4, device=device)
     train_ca(model, 
              target, 
              output, 
-             width=width, 
-             height=height, 
              epochs=epochs, 
              lr=lr,
              step_range=step_range, 
@@ -88,12 +75,10 @@ def train(image:str,
 @click.option("--steps", help="number of steps to run ca", default=1000)
 def render_video(model:str, output:str, size:int, steps:int):
 
- 
     model = torch.load(model)
     model.device = device
     model.to(device)
     render_ca_video(model, output, size=size, steps=steps)
-
 
 @cli.command()
 @click.option("--model", help="path to model")

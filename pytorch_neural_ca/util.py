@@ -6,7 +6,14 @@ from PIL import Image
 from tqdm import tqdm
 import sys
 
-
+def resize_and_pad(image, width, padding):
+    im_w, img_h = image.size
+    aspect = im_w / img_h
+    height = int(width / aspect)
+    image = image.resize((width - padding * 2, height - padding * 2), Image.BICUBIC)
+    target = Image.new('RGBA', (width, height))
+    target.paste(image, (padding, padding), image)
+    return target
 
 def generate_initial_state(width, height, channels, device=torch.device('cpu')):
     state = torch.zeros((1, channels, height, width), device=device)
@@ -29,7 +36,7 @@ def state_to_image(state, target_size=(128,128)) -> np.ndarray:
     return frame
 
 
-def render_ca_video(model, output, width, height, steps=1000, verbose=True):
+def render_test_video(model, output, width, height, steps=1000, verbose=True):
     
     state = generate_initial_state(width, height, model.channels, device=model.device)
     writer = imageio.get_writer(output, fps=24)
