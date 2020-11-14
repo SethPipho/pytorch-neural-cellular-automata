@@ -25,17 +25,17 @@ def cli():
 
     
 @cli.command()
-@click.option("--image", help="path to target image")
-@click.option("--output", help="directory to output model and training stats")
-@click.option("--width", help="width of grid", default=64)
-@click.option("--padding", help="width of grid", default=12)
-@click.option("--batch-size", help="batch size", default=8)
-@click.option("--epochs", help="number of training iterations", default=8000)
-@click.option("--lr", help="learning rate", default=1e-3, type=float)
-@click.option("--step-range", help="min and max steps to grow ca", nargs=2, default=[64, 96], type=int)
-@click.option("--grad-clip-val", help="max norm value for gradient clipping", default=.1)
-@click.option("--sample-every", help="Sample pool every n steps", default=1000)
-@click.option("--channels", help="Number of hidden channels", default=12)
+@click.option("--image", help="Path to target image")
+@click.option("--output", help="Directory to output model and training data")
+@click.option("--width", help="Width to resize image (preserves aspect ratio) (default: 64)", default=64)
+@click.option("--padding", help="Amount to pad image edges (default: 12)", default=12)
+@click.option("--batch-size", help="Batch size (default: 8)", default=8)
+@click.option("--epochs", help="Number of training iterations (default: 8000)", default=8000)
+@click.option("--lr", help="learning rate (default: 1e-3)", default=1e-3, type=float)
+@click.option("--step-range", help="min and max steps to grow ca (default: 64 96)", nargs=2, default=[64, 96], type=int)
+@click.option("--grad-clip-val", help="max norm value for gradient clipping (default: .1)", default=.1)
+@click.option("--sample-every", help="Output pool samples and demo videos every n epochs (default: 1000)", default=1000)
+@click.option("--channels", help="Number of hidden state channels in model (default: 12)", default=12)
 def train(image:str, 
           output:str, 
           width:int, 
@@ -82,8 +82,9 @@ def render_video(model:str, output:str, size:int, steps:int):
 
 @cli.command()
 @click.option("--model", help="path to model")
-@click.option("--size", help="size of grid", default=64)
-def demo(model:str, size:int):
+@click.option("--size", help="size of grid (default: 64)", default=64)
+@click.option("--window-size", help="size of window (default: 256)", default=256)
+def demo(model:str, size:int, window_size:int):
 
     import cv2
 
@@ -91,7 +92,6 @@ def demo(model:str, size:int):
     print('Right Click to place seed')
     print("'R' key to clear")
 
-    window_size = 256
     window_scale = window_size / size
 
     model = torch.load(model, map_location=device)
