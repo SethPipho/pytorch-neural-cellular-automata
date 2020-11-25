@@ -5,9 +5,23 @@ import numpy as np
 import imageio
 from PIL import Image
 from tqdm import tqdm
+import cmapy
 
 import torch
 import torch.nn.functional as F
+
+
+def channel_to_image(state, channel):
+    img = state.clone().numpy()[0,channel, :, :]
+    if channel == 3:
+        img[img < .1] = 0.0
+        img[img >= .1] = 1.0
+    img = (np.arctan(img) / (3.141592 / 2) / 2 + .5)
+    img = img * 255.0
+    img = img.astype('uint8')
+    img = cmapy.colorize(img, 'RdBu')
+    return img
+    
 
 def reset_conv2d(layer):
     n = layer.in_channels
