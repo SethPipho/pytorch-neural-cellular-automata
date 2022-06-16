@@ -61,7 +61,7 @@ def train_ca(model,
         
         with torch.no_grad():
           #reset training loop is all states are dead
-          is_dead = torch.amax(state[:,4,:,:]) < .1
+          is_dead = torch.amax(state[:,3,:,:]) < .1
           if is_dead:
             print("Found dead state, reseting training")
             model.reset_weights()
